@@ -43,10 +43,9 @@ export const TeacherDashboard = ({ teacherId, onLogout, onBack }: TeacherDashboa
     { icon: UserPlus, label: "Add Student", color: "text-green-600", bg: "bg-green-50", gradient: "from-green-400 to-emerald-500" },
     { icon: Search, label: "Search Student", color: "text-blue-600", bg: "bg-blue-50", gradient: "from-blue-400 to-cyan-500" },
     { icon: Edit, label: "Update Student", color: "text-orange-600", bg: "bg-orange-50", gradient: "from-orange-400 to-yellow-500" },
-    { icon: Users, label: "Show Student", color: "text-purple-600", bg: "bg-purple-50", gradient: "from-purple-400 to-pink-500" },
     { icon: Clock, label: "Attendance", color: "text-indigo-600", bg: "bg-indigo-50", gradient: "from-indigo-400 to-blue-500" },
     { icon: GraduationCap, label: "Update Grade", color: "text-yellow-600", bg: "bg-yellow-50", gradient: "from-yellow-400 to-orange-500" },
-    { icon: BookOpen, label: "Course Update", color: "text-teal-600", bg: "bg-teal-50", gradient: "from-teal-400 to-green-500" },
+    { icon: BookOpen, label: "Course Management", color: "text-teal-600", bg: "bg-teal-50", gradient: "from-teal-400 to-green-500" },
   ];
 
   const handleButtonClick = (label: string) => {
@@ -238,14 +237,7 @@ export const TeacherDashboard = ({ teacherId, onLogout, onBack }: TeacherDashboa
         />
       )}
       
-      {activeModal === "Show Student" && (
-        <SearchStudentForm
-          onClose={closeModal}
-          students={students}
-        />
-      )}
-      
-      {activeModal === "Attendance Management" && (
+      {activeModal === "Attendance" && (
         <AttendanceForm
           onClose={closeModal}
           students={students}
@@ -261,7 +253,7 @@ export const TeacherDashboard = ({ teacherId, onLogout, onBack }: TeacherDashboa
         />
       )}
       
-      {activeModal === "Course Update" && (
+      {activeModal === "Course Management" && (
         <CourseManagementForm
           onClose={closeModal}
           isStudent={false}

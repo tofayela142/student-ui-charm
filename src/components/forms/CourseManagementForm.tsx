@@ -52,8 +52,10 @@ export const CourseManagementForm = ({ onClose, isStudent = false }: CourseManag
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newCourse, setNewCourse] = useState({
+    courseId: "",
     name: "",
     instructor: "",
+    teacherId: "",
     credits: "",
     description: ""
   });
@@ -62,7 +64,7 @@ export const CourseManagementForm = ({ onClose, isStudent = false }: CourseManag
     soundManager.play('success');
     console.log('Adding course:', newCourse);
     setShowAddForm(false);
-    setNewCourse({ name: "", instructor: "", credits: "", description: "" });
+    setNewCourse({ courseId: "", name: "", instructor: "", teacherId: "", credits: "", description: "" });
   };
 
   const handleRegisterCourse = (courseId: string) => {
@@ -139,6 +141,15 @@ export const CourseManagementForm = ({ onClose, isStudent = false }: CourseManag
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
+                      <Label htmlFor="courseId">Course ID</Label>
+                      <Input
+                        id="courseId"
+                        value={newCourse.courseId}
+                        onChange={(e) => setNewCourse(prev => ({ ...prev, courseId: e.target.value }))}
+                        placeholder="Enter course ID (e.g., CS101)"
+                      />
+                    </div>
+                    <div>
                       <Label htmlFor="courseName">Course Name</Label>
                       <Input
                         id="courseName"
@@ -154,6 +165,15 @@ export const CourseManagementForm = ({ onClose, isStudent = false }: CourseManag
                         value={newCourse.instructor}
                         onChange={(e) => setNewCourse(prev => ({ ...prev, instructor: e.target.value }))}
                         placeholder="Enter instructor name"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="teacherId">Teacher ID</Label>
+                      <Input
+                        id="teacherId"
+                        value={newCourse.teacherId}
+                        onChange={(e) => setNewCourse(prev => ({ ...prev, teacherId: e.target.value }))}
+                        placeholder="Enter teacher ID"
                       />
                     </div>
                     <div>
