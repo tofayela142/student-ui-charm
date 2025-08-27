@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
-  UserPlus, Search, Trash2, Edit, Users, FileDown, 
-  GraduationCap, BookOpen, LogOut, Database 
+  UserPlus, Search, Trash2, Edit, Users, 
+  GraduationCap, BookOpen, LogOut, Database, Clock, ArrowLeft
 } from "lucide-react";
+import { soundManager } from "@/utils/sound";
 
 interface Student {
   id: string;
@@ -17,9 +18,10 @@ interface Student {
 interface TeacherDashboardProps {
   teacherId: string;
   onLogout: () => void;
+  onBack?: () => void;
 }
 
-export const TeacherDashboard = ({ teacherId, onLogout }: TeacherDashboardProps) => {
+export const TeacherDashboard = ({ teacherId, onLogout, onBack }: TeacherDashboardProps) => {
   const [students] = useState<Student[]>([
     { id: "S001", name: "John Doe", mobile: "+1234567890", email: "john@email.com" },
     { id: "S002", name: "Jane Smith", mobile: "+1234567891", email: "jane@email.com" },
@@ -27,15 +29,20 @@ export const TeacherDashboard = ({ teacherId, onLogout }: TeacherDashboardProps)
   ]);
 
   const menuItems = [
-    { icon: UserPlus, label: "Add Student", color: "text-green-600", bg: "bg-green-50" },
-    { icon: Search, label: "Search Student", color: "text-blue-600", bg: "bg-blue-50" },
-    { icon: Trash2, label: "Delete Student", color: "text-red-600", bg: "bg-red-50" },
-    { icon: Edit, label: "Update Student", color: "text-orange-600", bg: "bg-orange-50" },
-    { icon: Users, label: "Show Student", color: "text-purple-600", bg: "bg-purple-50" },
-    { icon: FileDown, label: "Export Data", color: "text-orange-600", bg: "bg-orange-50" },
-    { icon: GraduationCap, label: "Update Grade", color: "text-yellow-600", bg: "bg-yellow-50" },
-    { icon: BookOpen, label: "Course Update", color: "text-yellow-600", bg: "bg-yellow-50" },
+    { icon: UserPlus, label: "Add Student", color: "text-green-600", bg: "bg-green-50", gradient: "from-green-400 to-emerald-500" },
+    { icon: Search, label: "Search Student", color: "text-blue-600", bg: "bg-blue-50", gradient: "from-blue-400 to-cyan-500" },
+    { icon: Trash2, label: "Delete Student", color: "text-red-600", bg: "bg-red-50", gradient: "from-red-400 to-pink-500" },
+    { icon: Edit, label: "Update Student", color: "text-orange-600", bg: "bg-orange-50", gradient: "from-orange-400 to-yellow-500" },
+    { icon: Users, label: "Show Student", color: "text-purple-600", bg: "bg-purple-50", gradient: "from-purple-400 to-pink-500" },
+    { icon: Clock, label: "Attendance Management", color: "text-indigo-600", bg: "bg-indigo-50", gradient: "from-indigo-400 to-blue-500" },
+    { icon: GraduationCap, label: "Update Grade", color: "text-yellow-600", bg: "bg-yellow-50", gradient: "from-yellow-400 to-orange-500" },
+    { icon: BookOpen, label: "Course Update", color: "text-teal-600", bg: "bg-teal-50", gradient: "from-teal-400 to-green-500" },
   ];
+
+  const handleButtonClick = (label: string) => {
+    soundManager.play('click');
+    console.log(`Clicked: ${label}`);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
@@ -54,7 +61,27 @@ export const TeacherDashboard = ({ teacherId, onLogout }: TeacherDashboardProps)
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">Teacher ID: {teacherId}</span>
-              <Button variant="outline" onClick={onLogout}>
+              {onBack && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    soundManager.play('click');
+                    onBack();
+                  }}
+                  className="hover:bg-primary/10 hover:border-primary transition-smooth"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+              )}
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  soundManager.play('click');
+                  onLogout();
+                }}
+                className="hover:bg-destructive/10 hover:border-destructive hover:text-destructive transition-smooth"
+              >
                 <LogOut className="w-4 h-4 mr-2" />
                 Exit
               </Button>
@@ -82,10 +109,14 @@ export const TeacherDashboard = ({ teacherId, onLogout }: TeacherDashboardProps)
                     <Button
                       key={index}
                       variant="ghost"
-                      className={`w-full justify-start h-12 ${item.bg} hover:${item.bg} ${item.color} border-l-4 border-l-transparent hover:border-l-current transition-smooth`}
+                      onClick={() => handleButtonClick(item.label)}
+                      onMouseEnter={() => soundManager.play('hover')}
+                      className={`w-full justify-start h-14 group relative overflow-hidden ${item.bg} hover:${item.bg} ${item.color} border-l-4 border-l-transparent hover:border-l-current transition-smooth hover:scale-105 hover:shadow-lg animate-fade-in`}
+                      style={{ animationDelay: `${index * 0.1}s` }}
                     >
-                      <item.icon className="w-4 h-4 mr-3" />
-                      {item.label}
+                      <div className={`absolute inset-0 bg-gradient-to-r ${item.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+                      <item.icon className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="font-medium">{item.label}</span>
                     </Button>
                   ))}
                 </div>
