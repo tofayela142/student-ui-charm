@@ -127,7 +127,7 @@ export const ResultViewForm = ({ onClose, studentId }: ResultViewFormProps) => {
                       <SelectValue placeholder="All courses" />
                     </SelectTrigger>
                     <SelectContent className="bg-white">
-                      <SelectItem value="">All Courses</SelectItem>
+                      <SelectItem value="all">All Courses</SelectItem>
                       {courses.map(course => (
                         <SelectItem key={course} value={course}>{course}</SelectItem>
                       ))}
@@ -158,7 +158,7 @@ export const ResultViewForm = ({ onClose, studentId }: ResultViewFormProps) => {
                         </TableHeader>
                         <TableBody>
                           {ctResults
-                            .filter(course => !selectedCourse || course.courseId === selectedCourse)
+                            .filter(course => selectedCourse === "all" || !selectedCourse || course.courseId === selectedCourse)
                             .map((course) => (
                             <TableRow key={course.courseId}>
                               <TableCell className="font-medium">{course.courseId}</TableCell>
