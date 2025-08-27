@@ -7,6 +7,9 @@ import {
   BookOpen, GraduationCap, LogOut, User, Clock, ArrowLeft
 } from "lucide-react";
 import { soundManager } from "@/utils/sound";
+import { AttendanceForm } from "@/components/forms/AttendanceForm";
+import { CourseManagementForm } from "@/components/forms/CourseManagementForm";
+import { useToast } from "@/hooks/use-toast";
 
 interface Course {
   id: string;
@@ -23,11 +26,22 @@ interface StudentDashboardProps {
 }
 
 export const StudentDashboard = ({ studentId, onLogout, onBack }: StudentDashboardProps) => {
-  const [courses] = useState<Course[]>([
+  const { toast } = useToast();
+  const [courses, setCourses] = useState<Course[]>([
     { id: "CS101", name: "Computer Science Fundamentals", instructor: "Dr. Smith", credits: 3, status: "Enrolled" },
     { id: "MATH201", name: "Calculus II", instructor: "Prof. Johnson", credits: 4, status: "Enrolled" },
     { id: "ENG101", name: "English Composition", instructor: "Dr. Brown", credits: 3, status: "Completed" },
   ]);
+
+  const [activeModal, setActiveModal] = useState<string | null>(null);
+  
+  // Mock student data for forms
+  const studentData = { 
+    id: studentId, 
+    name: "Current Student", 
+    mobile: "+1234567890", 
+    email: "student@email.com" 
+  };
 
   const menuItems = [
     { icon: Database, label: "Connect to Database", color: "text-green-600", bg: "bg-green-50", gradient: "from-green-400 to-emerald-500" },
@@ -41,7 +55,24 @@ export const StudentDashboard = ({ studentId, onLogout, onBack }: StudentDashboa
 
   const handleButtonClick = (label: string) => {
     soundManager.play('click');
-    console.log(`Clicked: ${label}`);
+    
+    if (label === "Connect to Database") {
+      toast({
+        title: "Database Connected",
+        description: "Successfully connected to the student database.",
+      });
+    } else if (label === "Show Result") {
+      toast({
+        title: "Academic Results",
+        description: "Overall GPA: 3.8/4.0 | Current Semester: 3.9/4.0",
+      });
+    } else {
+      setActiveModal(label);
+    }
+  };
+
+  const closeModal = () => {
+    setActiveModal(null);
   };
 
   return (
@@ -168,6 +199,61 @@ export const StudentDashboard = ({ studentId, onLogout, onBack }: StudentDashboa
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      {activeModal === "Attendance Tracker" && (
+        <AttendanceForm
+          onClose={closeModal}
+          students={[studentData]}
+          isTeacher={false}
+        />
+      )}
+      
+      {(activeModal === "Course Registration" || activeModal === "Your Allocated Course") && (
+        <CourseManagementForm
+          onClose={closeModal}
+          isStudent={true}
+        />
+      )}
+      
+      {(activeModal === "Search Student" || activeModal === "Show Student") && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
+          <Card className="w-full max-w-md mx-4 shadow-2xl">
+            <CardHeader className="gradient-secondary text-white">
+              <div className="flex items-center justify-between">
+                <CardTitle>Student Information</CardTitle>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  onClick={closeModal}
+                  className="text-white hover:bg-white/20"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <strong>Student ID:</strong> {studentId}
+                </div>
+                <div>
+                  <strong>Name:</strong> Current Student
+                </div>
+                <div>
+                  <strong>Email:</strong> student@email.com
+                </div>
+                <div>
+                  <strong>Enrolled Courses:</strong> {courses.length}
+                </div>
+                <div>
+                  <strong>Current GPA:</strong> 3.8/4.0
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

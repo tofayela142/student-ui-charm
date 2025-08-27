@@ -3,16 +3,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
-  UserPlus, Search, Trash2, Edit, Users, 
+  UserPlus, Search, Edit, Users, 
   GraduationCap, BookOpen, LogOut, Database, Clock, ArrowLeft
 } from "lucide-react";
 import { soundManager } from "@/utils/sound";
+import { AddStudentForm } from "@/components/forms/AddStudentForm";
+import { SearchStudentForm } from "@/components/forms/SearchStudentForm";
+import { UpdateStudentForm } from "@/components/forms/UpdateStudentForm";
+import { AttendanceForm } from "@/components/forms/AttendanceForm";
+import { GradeUpdateForm } from "@/components/forms/GradeUpdateForm";
+import { CourseManagementForm } from "@/components/forms/CourseManagementForm";
+import { useToast } from "@/hooks/use-toast";
 
 interface Student {
   id: string;
   name: string;
   mobile: string;
   email: string;
+  grade?: string;
 }
 
 interface TeacherDashboardProps {
@@ -22,16 +30,18 @@ interface TeacherDashboardProps {
 }
 
 export const TeacherDashboard = ({ teacherId, onLogout, onBack }: TeacherDashboardProps) => {
-  const [students] = useState<Student[]>([
-    { id: "S001", name: "John Doe", mobile: "+1234567890", email: "john@email.com" },
-    { id: "S002", name: "Jane Smith", mobile: "+1234567891", email: "jane@email.com" },
-    { id: "S003", name: "Mike Johnson", mobile: "+1234567892", email: "mike@email.com" },
+  const { toast } = useToast();
+  const [students, setStudents] = useState<Student[]>([
+    { id: "S001", name: "John Doe", mobile: "+1234567890", email: "john@email.com", grade: "A" },
+    { id: "S002", name: "Jane Smith", mobile: "+1234567891", email: "jane@email.com", grade: "B+" },
+    { id: "S003", name: "Mike Johnson", mobile: "+1234567892", email: "mike@email.com", grade: "A-" },
   ]);
+
+  const [activeModal, setActiveModal] = useState<string | null>(null);
 
   const menuItems = [
     { icon: UserPlus, label: "Add Student", color: "text-green-600", bg: "bg-green-50", gradient: "from-green-400 to-emerald-500" },
     { icon: Search, label: "Search Student", color: "text-blue-600", bg: "bg-blue-50", gradient: "from-blue-400 to-cyan-500" },
-    { icon: Trash2, label: "Delete Student", color: "text-red-600", bg: "bg-red-50", gradient: "from-red-400 to-pink-500" },
     { icon: Edit, label: "Update Student", color: "text-orange-600", bg: "bg-orange-50", gradient: "from-orange-400 to-yellow-500" },
     { icon: Users, label: "Show Student", color: "text-purple-600", bg: "bg-purple-50", gradient: "from-purple-400 to-pink-500" },
     { icon: Clock, label: "Attendance Management", color: "text-indigo-600", bg: "bg-indigo-50", gradient: "from-indigo-400 to-blue-500" },
@@ -41,7 +51,43 @@ export const TeacherDashboard = ({ teacherId, onLogout, onBack }: TeacherDashboa
 
   const handleButtonClick = (label: string) => {
     soundManager.play('click');
-    console.log(`Clicked: ${label}`);
+    setActiveModal(label);
+  };
+
+  const handleAddStudent = (newStudent: Student) => {
+    setStudents(prev => [...prev, newStudent]);
+    toast({
+      title: "Student Added",
+      description: `${newStudent.name} has been successfully added to the system.`,
+    });
+  };
+
+  const handleUpdateStudent = (studentId: string, updatedData: Partial<Student>) => {
+    setStudents(prev => 
+      prev.map(student => 
+        student.id === studentId ? { ...student, ...updatedData } : student
+      )
+    );
+    toast({
+      title: "Student Updated",
+      description: "Student information has been successfully updated.",
+    });
+  };
+
+  const handleUpdateGrade = (studentId: string, subject: string, grade: string, marks: number) => {
+    setStudents(prev => 
+      prev.map(student => 
+        student.id === studentId ? { ...student, grade } : student
+      )
+    );
+    toast({
+      title: "Grade Updated",
+      description: `Grade updated: ${subject} - ${grade} (${marks} marks)`,
+    });
+  };
+
+  const closeModal = () => {
+    setActiveModal(null);
   };
 
   return (
@@ -139,6 +185,7 @@ export const TeacherDashboard = ({ teacherId, onLogout, onBack }: TeacherDashboa
                         <TableHead className="font-semibold text-red-600">Name</TableHead>
                         <TableHead className="font-semibold text-red-600">Mobile No</TableHead>
                         <TableHead className="font-semibold text-red-600">Email Address</TableHead>
+                        <TableHead className="font-semibold text-red-600">Grade</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -148,6 +195,15 @@ export const TeacherDashboard = ({ teacherId, onLogout, onBack }: TeacherDashboa
                           <TableCell>{student.name}</TableCell>
                           <TableCell>{student.mobile}</TableCell>
                           <TableCell>{student.email}</TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              student.grade 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {student.grade || 'Not Assigned'}
+                            </span>
+                          </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -158,6 +214,59 @@ export const TeacherDashboard = ({ teacherId, onLogout, onBack }: TeacherDashboa
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      {activeModal === "Add Student" && (
+        <AddStudentForm
+          onClose={closeModal}
+          onAddStudent={handleAddStudent}
+        />
+      )}
+      
+      {activeModal === "Search Student" && (
+        <SearchStudentForm
+          onClose={closeModal}
+          students={students}
+        />
+      )}
+      
+      {activeModal === "Update Student" && (
+        <UpdateStudentForm
+          onClose={closeModal}
+          students={students}
+          onUpdateStudent={handleUpdateStudent}
+        />
+      )}
+      
+      {activeModal === "Show Student" && (
+        <SearchStudentForm
+          onClose={closeModal}
+          students={students}
+        />
+      )}
+      
+      {activeModal === "Attendance Management" && (
+        <AttendanceForm
+          onClose={closeModal}
+          students={students}
+          isTeacher={true}
+        />
+      )}
+      
+      {activeModal === "Update Grade" && (
+        <GradeUpdateForm
+          onClose={closeModal}
+          students={students}
+          onUpdateGrade={handleUpdateGrade}
+        />
+      )}
+      
+      {activeModal === "Course Update" && (
+        <CourseManagementForm
+          onClose={closeModal}
+          isStudent={false}
+        />
+      )}
     </div>
   );
 };
