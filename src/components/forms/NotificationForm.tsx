@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,12 +7,12 @@ import { Bell, X, Clock, Check } from "lucide-react";
 import { soundManager } from "@/utils/sound";
 
 interface Notification {
-  id: string;
+  id: number;
   title: string;
   message: string;
-  type: "grade" | "exam" | "announcement" | "attendance";
-  timestamp: string;
-  isRead: boolean;
+  type: "grade" | "exam" | "announcement" | "attendance" | "broadcast";
+  created_at: string;
+  is_read: boolean;
   sender: string;
 }
 
@@ -21,55 +22,77 @@ interface NotificationFormProps {
 }
 
 export const NotificationForm = ({ onClose, studentId }: NotificationFormProps) => {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      title: "CT Marks Published",
-      message: "Your CSE101 CT-2 marks have been published. Score: 18/20",
-      type: "grade",
-      timestamp: "2024-01-15 14:30",
-      isRead: false,
-      sender: "Dr. Ahmad"
-    },
-    {
-      id: "2", 
-      title: "Exam Schedule Updated",
-      message: "Final exam for MAT101 has been rescheduled to January 25, 2024 at 10:00 AM",
-      type: "exam",
-      timestamp: "2024-01-14 09:15",
-      isRead: false,
-      sender: "Exam Controller"
-    },
-    {
-      id: "3",
-      title: "Low Attendance Warning",
-      message: "Your attendance in PHY101 is below 75%. Current: 72%. Please attend regularly.",
-      type: "attendance", 
-      timestamp: "2024-01-13 16:45",
-      isRead: true,
-      sender: "System"
-    },
-    {
-      id: "4",
-      title: "Assignment Deadline",
-      message: "CSE102 Assignment 3 deadline is approaching. Due: January 20, 2024",
-      type: "announcement",
-      timestamp: "2024-01-12 11:20",
-      isRead: false,
-      sender: "Prof. Rahman"
-    },
-    {
-      id: "5",
-      title: "Semester Results",
-      message: "Fall 2023 semester results have been published. Check your result section.",
-      type: "grade",
-      timestamp: "2024-01-10 13:00",
-      isRead: true,
-      sender: "Academic Office"
-    }
-  ]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  useEffect(() => {
+    fetchNotifications();
+    
+    // Set up realtime subscription
+    const channel = supabase
+      .channel('notifications-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${studentId}`
+        },
+        (payload) => {
+          console.log('New notification:', payload);
+          const newNotification = payload.new as any;
+          setNotifications(prev => [
+            {
+              id: newNotification.id,
+              title: newNotification.title,
+              message: newNotification.message,
+              type: newNotification.type,
+              created_at: newNotification.created_at,
+              is_read: newNotification.is_read,
+              sender: newNotification.sender
+            },
+            ...prev
+          ]);
+          soundManager.play('notification');
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [studentId]);
+
+  const fetchNotifications = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', studentId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedNotifications = (data || []).map(notification => ({
+        id: notification.id,
+        title: notification.title,
+        message: notification.message,
+        type: notification.type as "grade" | "exam" | "announcement" | "attendance" | "broadcast",
+        created_at: notification.created_at,
+        is_read: notification.is_read,
+        sender: notification.sender
+      }));
+
+      setNotifications(formattedNotifications);
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -91,22 +114,48 @@ export const NotificationForm = ({ onClose, studentId }: NotificationFormProps) 
     }
   };
 
-  const markAsRead = (notificationId: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === notificationId 
-          ? { ...notification, isRead: true }
-          : notification
-      )
-    );
-    soundManager.play('click');
+  const markAsRead = async (notificationId: number) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notificationId);
+
+      if (error) throw error;
+
+      setNotifications(prev => 
+        prev.map(notification => 
+          notification.id === notificationId 
+            ? { ...notification, is_read: true }
+            : notification
+        )
+      );
+      soundManager.play('click');
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, isRead: true }))
-    );
-    soundManager.play('success');
+  const markAllAsRead = async () => {
+    try {
+      const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
+      
+      if (unreadIds.length === 0) return;
+
+      const { error } = await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .in('id', unreadIds);
+
+      if (error) throw error;
+
+      setNotifications(prev => 
+        prev.map(notification => ({ ...notification, is_read: true }))
+      );
+      soundManager.play('success');
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
   };
 
   const formatTime = (timestamp: string) => {
@@ -120,6 +169,19 @@ export const NotificationForm = ({ onClose, studentId }: NotificationFormProps) 
     if (days < 7) return `${days} days ago`;
     return date.toLocaleDateString();
   };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <Card className="w-full max-w-2xl mx-4 shadow-2xl">
+          <CardContent className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p>Loading notifications...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
@@ -173,7 +235,7 @@ export const NotificationForm = ({ onClose, studentId }: NotificationFormProps) 
                 <div
                   key={notification.id}
                   className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-                    !notification.isRead ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                    !notification.is_read ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
                   }`}
                   onClick={() => markAsRead(notification.id)}
                 >
@@ -185,14 +247,14 @@ export const NotificationForm = ({ onClose, studentId }: NotificationFormProps) 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2 mb-1">
                           <h4 className={`font-semibold text-gray-900 ${
-                            !notification.isRead ? 'font-bold' : ''
+                            !notification.is_read ? 'font-bold' : ''
                           }`}>
                             {notification.title}
                           </h4>
                           <Badge className={getTypeColor(notification.type)}>
                             {notification.type}
                           </Badge>
-                          {!notification.isRead && (
+                          {!notification.is_read && (
                             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                           )}
                         </div>
@@ -202,7 +264,7 @@ export const NotificationForm = ({ onClose, studentId }: NotificationFormProps) 
                         <div className="flex items-center space-x-4 text-xs text-gray-500">
                           <span className="flex items-center">
                             <Clock className="w-3 h-3 mr-1" />
-                            {formatTime(notification.timestamp)}
+                            {formatTime(notification.created_at)}
                           </span>
                           <span>From: {notification.sender}</span>
                         </div>

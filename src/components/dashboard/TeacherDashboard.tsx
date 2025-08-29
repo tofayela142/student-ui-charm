@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { 
   UserPlus, Search, Edit, Users, 
-  GraduationCap, BookOpen, LogOut, Database, Clock, ArrowLeft
+  GraduationCap, BookOpen, LogOut, Database, Clock, ArrowLeft, Megaphone
 } from "lucide-react";
 import { soundManager } from "@/utils/sound";
 import { AddStudentForm } from "@/components/forms/AddStudentForm";
@@ -13,6 +13,7 @@ import { UpdateStudentForm } from "@/components/forms/UpdateStudentForm";
 import { AttendanceForm } from "@/components/forms/AttendanceForm";
 import { GradeUpdateForm } from "@/components/forms/GradeUpdateForm";
 import { CourseManagementForm } from "@/components/forms/CourseManagementForm";
+import { BroadcastForm } from "@/components/forms/BroadcastForm";
 import { useToast } from "@/hooks/use-toast";
 
 interface Student {
@@ -42,6 +43,7 @@ export const TeacherDashboard = ({ teacherId, onLogout, onBack }: TeacherDashboa
   const menuItems = [
     { icon: UserPlus, label: "Add Student", color: "text-green-600", bg: "bg-green-50", gradient: "from-green-400 to-emerald-500" },
     { icon: Search, label: "Search Student", color: "text-blue-600", bg: "bg-blue-50", gradient: "from-blue-400 to-cyan-500" },
+    { icon: Megaphone, label: "Broadcast", color: "text-purple-600", bg: "bg-purple-50", gradient: "from-purple-400 to-pink-500" },
     { icon: Edit, label: "Update Student", color: "text-orange-600", bg: "bg-orange-50", gradient: "from-orange-400 to-yellow-500" },
     { icon: Clock, label: "Attendance", color: "text-indigo-600", bg: "bg-indigo-50", gradient: "from-indigo-400 to-blue-500" },
     { icon: GraduationCap, label: "Update Grade", color: "text-yellow-600", bg: "bg-yellow-50", gradient: "from-yellow-400 to-orange-500" },
@@ -257,6 +259,13 @@ export const TeacherDashboard = ({ teacherId, onLogout, onBack }: TeacherDashboa
         <CourseManagementForm
           onClose={closeModal}
           isStudent={false}
+        />
+      )}
+      
+      {activeModal === "Broadcast" && (
+        <BroadcastForm
+          onClose={closeModal}
+          teacherId={teacherId}
         />
       )}
     </div>
