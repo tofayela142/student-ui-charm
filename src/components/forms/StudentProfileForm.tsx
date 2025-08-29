@@ -13,6 +13,7 @@ interface StudentProfileFormProps {
 }
 
 export const StudentProfileForm = ({ onClose, studentId }: StudentProfileFormProps) => {
+  console.log("StudentProfileForm rendered with studentId:", studentId);
   const [profilePic, setProfilePic] = useState<string>("");
   
   // Mock student data - would come from database
