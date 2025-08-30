@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Search, X } from "lucide-react";
 import { soundManager } from "@/utils/sound";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Student {
   id: string;
@@ -17,14 +18,14 @@ interface Student {
 
 interface SearchStudentFormProps {
   onClose: () => void;
-  students: Student[];
 }
 
-export const SearchStudentForm = ({ onClose, students }: SearchStudentFormProps) => {
+export const SearchStudentForm = ({ onClose }: SearchStudentFormProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     soundManager.play('click');
     
     if (!searchTerm.trim()) {
@@ -32,14 +33,49 @@ export const SearchStudentForm = ({ onClose, students }: SearchStudentFormProps)
       return;
     }
 
-    const filtered = students.filter(student =>
-      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.mobile.includes(searchTerm)
-    );
-    
-    setSearchResults(filtered);
+    setLoading(true);
+    try {
+      // Search in personal_info and students tables
+      const { data: personalData, error: personalError } = await supabase
+        .from('personal_info')
+        .select('user_id, full_name, email, phone')
+        .or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,user_id.ilike.%${searchTerm}%`);
+
+      if (personalError) throw personalError;
+
+      // Get corresponding student data
+      const userIds = personalData?.map(p => p.user_id) || [];
+      let studentData: any[] = [];
+      
+      if (userIds.length > 0) {
+        const { data: students, error: studentError } = await supabase
+          .from('students')
+          .select('*')
+          .in('student_id', userIds);
+
+        if (studentError) throw studentError;
+        studentData = students || [];
+      }
+
+      // Combine the data
+      const results = personalData?.map(person => {
+        const student = studentData.find(s => s.student_id === person.user_id);
+        return {
+          id: person.user_id,
+          name: person.full_name || 'No name',
+          email: person.email || 'No email',
+          mobile: person.phone || 'No phone',
+          grade: 'N/A' // Would come from results table
+        };
+      }) || [];
+      
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Error searching students:', error);
+      setSearchResults([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -82,10 +118,11 @@ export const SearchStudentForm = ({ onClose, students }: SearchStudentFormProps)
                 <Button 
                   onClick={handleSearch}
                   variant="hero"
+                  disabled={loading}
                   onMouseEnter={() => soundManager.play('hover')}
                 >
                   <Search className="w-4 h-4 mr-2" />
-                  Search
+                  {loading ? 'Searching...' : 'Search'}
                 </Button>
               </div>
             </div>

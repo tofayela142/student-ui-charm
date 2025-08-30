@@ -114,7 +114,7 @@ export const StudentDashboard = ({ studentId, onLogout, onBack }: StudentDashboa
 
       {/* Modals */}
       {activeModal === "Student Profile" && <StudentProfileForm onClose={() => setActiveModal(null)} studentId={studentId} />}
-      {activeModal === "Search Student" && <SearchStudentForm onClose={() => setActiveModal(null)} students={[]} />}
+      {activeModal === "Search Student" && <SearchStudentForm onClose={() => setActiveModal(null)} />}
       {activeModal === "Attendance Tracker" && <AttendanceTrackerForm onClose={() => setActiveModal(null)} studentId={studentId} />}
       {activeModal === "Show Result" && <ResultViewForm onClose={() => setActiveModal(null)} studentId={studentId} />}
       {activeModal === "Course Registration" && <CourseRegistrationForm onClose={() => setActiveModal(null)} studentId={studentId} />}

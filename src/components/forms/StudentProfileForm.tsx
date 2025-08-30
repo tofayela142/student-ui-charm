@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Upload, X } from "lucide-react";
 import { soundManager } from "@/utils/sound";
+import { supabase } from "@/integrations/supabase/client";
 
 interface StudentProfileFormProps {
   onClose: () => void;
@@ -13,18 +14,65 @@ interface StudentProfileFormProps {
 }
 
 export const StudentProfileForm = ({ onClose, studentId }: StudentProfileFormProps) => {
-  console.log("StudentProfileForm rendered with studentId:", studentId);
   const [profilePic, setProfilePic] = useState<string>("");
-  
-  // Mock student data - would come from database
-  const studentData = {
-    id: studentId,
-    name: "John Doe",
-    email: "john@email.com",
-    mobile: "+1234567890",
-    session: "2023-24",
-    bloodGroup: "A+",
-    department: "Computer Science"
+  const [studentData, setStudentData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStudentData();
+  }, [studentId]);
+
+  const fetchStudentData = async () => {
+    try {
+      // Fetch from personal_info table
+      const { data: personalInfo, error: personalError } = await supabase
+        .from('personal_info')
+        .select('*')
+        .eq('user_id', studentId)
+        .single();
+
+      // Fetch from students table  
+      const { data: studentInfo, error: studentError } = await supabase
+        .from('students')
+        .select('*')
+        .eq('student_id', studentId)
+        .single();
+
+      if (personalError && personalError.code !== 'PGRST116') {
+        console.error('Error fetching personal info:', personalError);
+      }
+      
+      if (studentError && studentError.code !== 'PGRST116') {
+        console.error('Error fetching student info:', studentError);
+      }
+
+      // Combine the data
+      setStudentData({
+        id: studentId,
+        name: personalInfo?.full_name || "Student Name",
+        email: personalInfo?.email || "No email",
+        mobile: personalInfo?.phone || "No phone",
+        session: studentInfo?.session || "N/A",
+        department: studentInfo?.department || "N/A",
+        bloodGroup: "A+", // Not in current schema
+        address: personalInfo?.address || "No address"
+      });
+    } catch (error) {
+      console.error('Error fetching student data:', error);
+      // Fallback data
+      setStudentData({
+        id: studentId,
+        name: "Student Name",
+        email: "No email",
+        mobile: "No phone",
+        session: "N/A",
+        department: "N/A",
+        bloodGroup: "N/A",
+        address: "No address"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,6 +86,32 @@ export const StudentProfileForm = ({ onClose, studentId }: StudentProfileFormPro
       soundManager.play('success');
     }
   };
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <Card className="w-full max-w-md mx-4 shadow-2xl">
+          <CardContent className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p>Loading profile...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!studentData) {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <Card className="w-full max-w-md mx-4 shadow-2xl">
+          <CardContent className="p-8 text-center">
+            <p>Error loading profile data</p>
+            <Button onClick={onClose} className="mt-4">Close</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">

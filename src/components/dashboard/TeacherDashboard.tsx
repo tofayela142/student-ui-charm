@@ -227,7 +227,6 @@ export const TeacherDashboard = ({ teacherId, onLogout, onBack }: TeacherDashboa
       {activeModal === "Search Student" && (
         <SearchStudentForm
           onClose={closeModal}
-          students={students}
         />
       )}
       
