@@ -86,29 +86,94 @@ export const StudentDashboard = ({ studentId, onLogout, onBack }: StudentDashboa
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {menuItems.map((item, index) => (
-            <Card key={index} className="group hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer overflow-hidden" onClick={() => handleButtonClick(item.label)} onMouseEnter={() => soundManager.play('hover')}>
-              <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
-              <CardHeader className={`${item.bg} group-hover:bg-opacity-80 transition-colors duration-300`}>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Sidebar Menu */}
+          <div className="lg:col-span-1">
+            <Card className="shadow-lg">
+              <CardHeader>
                 <div className="flex items-center space-x-3">
-                  <div className={`p-3 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform duration-200`}>
-                    <item.icon className={`w-6 h-6 ${item.color}`} />
+                  <div className="p-2 gradient-tech rounded-lg">
+                    <GraduationCap className="w-5 h-5 text-primary" />
                   </div>
-                  <CardTitle className="text-lg text-gray-800 group-hover:text-gray-900">{item.label}</CardTitle>
+                  <CardTitle className="text-lg">Student Actions</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="p-4">
-                <p className="text-sm text-gray-600 group-hover:text-gray-700 transition-colors duration-300">
-                  {item.label === "Student Profile" && "View and edit your personal information"}
-                  {item.label === "Search Student" && "Search for any registered student in the database"}
-                  {item.label === "Attendance Tracker" && "Track your attendance percentage across all courses"}
-                  {item.label === "Show Result" && "View your CT and semester results with CGPA"}
-                  {item.label === "Course Registration" && "Register for new courses and view enrolled courses"}
-                </p>
+              <CardContent className="p-2">
+                <div className="space-y-2">
+                  {menuItems.map((item, index) => (
+                    <Button
+                      key={index}
+                      variant="ghost"
+                      onClick={() => handleButtonClick(item.label)}
+                      onMouseEnter={() => soundManager.play('hover')}
+                      className={`w-full justify-start h-14 group relative overflow-hidden ${item.bg} hover:${item.bg} ${item.color} border-l-4 border-l-transparent hover:border-l-current transition-smooth hover:scale-105 hover:shadow-lg animate-fade-in`}
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <div className={`absolute inset-0 bg-gradient-to-r ${item.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
+                      <item.icon className="w-5 h-5 mr-3 group-hover:scale-110 transition-transform duration-200" />
+                      <span className="font-medium">{item.label}</span>
+                    </Button>
+                  ))}
+                </div>
               </CardContent>
             </Card>
-          ))}
+          </div>
+
+          {/* Main Content */}
+          <div className="lg:col-span-3">
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="text-xl text-gray-800">Student Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-6 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4">Quick Stats</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="bg-white p-4 rounded-lg shadow-sm">
+                        <div className="text-2xl font-bold text-blue-600">85%</div>
+                        <div className="text-sm text-gray-600">Attendance</div>
+                      </div>
+                      <div className="bg-white p-4 rounded-lg shadow-sm">
+                        <div className="text-2xl font-bold text-green-600">3.7</div>
+                        <div className="text-sm text-gray-600">CGPA</div>
+                      </div>
+                      <div className="bg-white p-4 rounded-lg shadow-sm">
+                        <div className="text-2xl font-bold text-purple-600">6</div>
+                        <div className="text-sm text-gray-600">Enrolled Courses</div>
+                      </div>
+                      <div className="bg-white p-4 rounded-lg shadow-sm">
+                        <div className="text-2xl font-bold text-orange-600">3</div>
+                        <div className="text-sm text-gray-600">Pending CTs</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                      <h4 className="font-semibold mb-3 text-gray-800">Recent Activity</h4>
+                      <div className="space-y-2 text-sm text-gray-600">
+                        <div>• Grade updated for Mathematics</div>
+                        <div>• Attendance marked for Physics</div>
+                        <div>• New announcement from CSE dept</div>
+                        <div>• CT scheduled for next week</div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                      <h4 className="font-semibold mb-3 text-gray-800">Upcoming Events</h4>
+                      <div className="space-y-2 text-sm text-gray-600">
+                        <div>• Mathematics CT - Feb 15</div>
+                        <div>• Physics Lab - Feb 18</div>
+                        <div>• Project Submission - Feb 20</div>
+                        <div>• Semester Exam - Mar 1</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 

@@ -246,7 +246,7 @@ export const BroadcastForm = ({ onClose, teacherId }: BroadcastFormProps) => {
                     <SelectValue placeholder="All Departments" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Departments</SelectItem>
+                    <SelectItem value="all">All Departments</SelectItem>
                     {departments.map((dept) => (
                       <SelectItem key={dept} value={dept}>
                         {dept}
@@ -266,7 +266,7 @@ export const BroadcastForm = ({ onClose, teacherId }: BroadcastFormProps) => {
                     <SelectValue placeholder="All Sessions" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Sessions</SelectItem>
+                    <SelectItem value="all">All Sessions</SelectItem>
                     {sessions.map((session) => (
                       <SelectItem key={session.session_id} value={session.session_id.toString()}>
                         {session.session_name}
@@ -290,7 +290,7 @@ export const BroadcastForm = ({ onClose, teacherId }: BroadcastFormProps) => {
                     <SelectValue placeholder="All Terms" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Terms</SelectItem>
+                    <SelectItem value="all">All Terms</SelectItem>
                     {terms.map((term) => (
                       <SelectItem key={term.term_id} value={term.term_id.toString()}>
                         {term.term_name}
